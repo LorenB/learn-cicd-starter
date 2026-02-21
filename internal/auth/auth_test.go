@@ -1,26 +1,47 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
-	"reflect"
 	"testing"
 )
 
 func TestGetAPIKey(t *testing.T) {
-	headers := http.Header{}
-	headers.Set("Authorization", "")
-	got, gotErr := GetAPIKey(headers)
-	want := ""
-	if !reflect.DeepEqual(want, got) {
-		t.Fatalf("expected %v, got: %v", want, got)
+	tests := []struct {
+		name       string
+		authHeader string
+		wantKey    string
+		wantErr    error
+	}{
+		{
+			name:       "valid API key",
+			authHeader: "ApiKey my-secret-key",
+			wantKey:    "my-secret-key",
+			wantErr:    nil,
+		},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			headers := http.Header{}
+			if tt.authHeader != "" {
+				headers.Set("Authorization", tt.authHeader)
+			}
 
-	// Compare error messages, not error instances
-	if gotErr == nil {
-		t.Fatal("expected error, got nil")
-	}
-	wantErrMsg := "no authorization header included"
-	if gotErr.Error() != wantErrMsg {
-		t.Fatalf("expected error: %v, got: %v", wantErrMsg, gotErr.Error())
+			got, err := GetAPIKey(headers)
+
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("expected error %v, got %v", tt.wantErr, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unex[ected error: %v", err)
+				}
+			}
+
+			if got != tt.wantKey {
+				t.Errorf("expected key %q, got %q", tt.wantKey, got)
+			}
+		})
 	}
 }
