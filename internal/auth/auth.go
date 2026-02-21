@@ -19,6 +19,5 @@ func GetAPIKey(headers http.Header) (string, error) {
 		return "", errors.New("malformed authorization header")
 	}
 
-	// TODO: fix
-	return splitAuth[1] + "oops", nil
+	return splitAuth[1], nil
 }
